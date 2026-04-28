@@ -20,9 +20,10 @@ interface ProfileFormProps {
     name: string
     email: string | null
   }
+  showPasswordForm: boolean
 }
 
-export function ProfileForm({ user }: ProfileFormProps) {
+export function ProfileForm({ user, showPasswordForm }: ProfileFormProps) {
   const router = useRouter()
   const userId = user.id as UserId
 
@@ -269,7 +270,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       </form>
 
       {/* Password */}
-      <PasswordForm />
+      {showPasswordForm && <PasswordForm />}
 
       {/* Image Cropper Modal */}
       {cropImageSrc && (

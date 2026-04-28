@@ -8,7 +8,7 @@ import { ProfileForm } from '@/components/settings/profile-form'
 export const Route = createFileRoute('/_portal/settings/profile')({
   loader: async ({ context }) => {
     // Session and settings validated in parent _portal layout
-    const { session, queryClient } = context
+    const { session, userRole, queryClient } = context
 
     if (!session?.user) {
       throw new Error('User not authenticated')
@@ -19,6 +19,7 @@ export const Route = createFileRoute('/_portal/settings/profile')({
 
     return {
       user: session.user,
+      isAdmin: userRole === 'admin',
     }
   },
   component: ProfilePage,
@@ -26,7 +27,7 @@ export const Route = createFileRoute('/_portal/settings/profile')({
 
 function ProfilePage() {
   const intl = useIntl()
-  const { user } = Route.useLoaderData()
+  const { user, isAdmin } = Route.useLoaderData()
 
   return (
     <div className="space-y-6">
@@ -53,6 +54,7 @@ function ProfilePage() {
             name: user.name,
             email: user.email,
           }}
+          showPasswordForm={isAdmin}
         />
       </div>
     </div>

@@ -10,3 +10,9 @@ export function getSuperTagSignupUrl(returnTo: string): string {
   url.searchParams.set('tab', 'signup')
   return url.toString()
 }
+
+export function getSuperTagLogoutUrl(returnTo: string): string {
+  const url = new URL('/logout', __SUPER_TAG_URL__)
+  url.searchParams.set('returnTo', returnTo)
+  return url.toString()
+}

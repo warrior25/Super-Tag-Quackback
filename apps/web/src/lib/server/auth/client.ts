@@ -5,6 +5,7 @@ import {
   genericOAuthClient,
   oneTimeTokenClient,
 } from 'better-auth/client/plugins'
+import { getSuperTagLogoutUrl } from '@/lib/client/super-tag'
 
 /**
  * Better-auth client for client-side authentication
@@ -25,7 +26,13 @@ export const authClient = createAuthClient({
  * Sign out the current user
  * Note: Call router.invalidate() after signOut to update session
  */
-export const signOut = authClient.signOut
+export async function signOut() {
+  await authClient.signOut()
+
+  if (typeof window !== 'undefined') {
+    window.location.replace(getSuperTagLogoutUrl(window.location.href))
+  }
+}
 
 /**
  * Check if the browser has an active session cookie.
