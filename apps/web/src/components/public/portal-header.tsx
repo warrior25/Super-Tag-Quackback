@@ -29,6 +29,7 @@ import { useAuthPopoverSafe } from '@/components/auth/auth-popover-context'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthBroadcast } from '@/lib/client/hooks/use-auth-broadcast'
 import { NotificationBell } from '@/components/notifications'
+import { getSuperTagSignupUrl } from '@/lib/client/super-tag'
 
 interface PortalHeaderProps {
   orgName: string
@@ -67,6 +68,7 @@ export function PortalHeader({
   const openAuthPopover = authPopover?.openAuthPopover
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const superTagSignupUrl = getSuperTagSignupUrl('/')
 
   // Avoid hydration mismatch for theme toggle
   useEffect(() => {
@@ -246,8 +248,10 @@ export function PortalHeader({
           <Button variant="ghost" size="sm" onClick={() => openAuthPopover({ mode: 'login' })}>
             <FormattedMessage id="portal.header.auth.logIn" defaultMessage="Log in" />
           </Button>
-          <Button size="sm" onClick={() => openAuthPopover({ mode: 'signup' })}>
-            <FormattedMessage id="portal.header.auth.signUp" defaultMessage="Sign up" />
+          <Button asChild size="sm">
+            <a href={superTagSignupUrl}>
+              <FormattedMessage id="portal.header.auth.signUp" defaultMessage="Sign up" />
+            </a>
           </Button>
         </div>
       ) : null}

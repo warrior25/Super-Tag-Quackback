@@ -1,7 +1,7 @@
 import { createFileRoute, redirect, Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { settingsQueries } from '@/lib/client/queries/settings'
-import { getSuperTagLoginUrl } from '@/lib/client/super-tag'
+import { getSuperTagLoginUrl, getSuperTagSignupUrl } from '@/lib/client/super-tag'
 
 /**
  * Portal Login Page
@@ -27,6 +27,7 @@ export const Route = createFileRoute('/auth/login')({
 function LoginPage() {
   Route.useLoaderData()
   const superTagLoginUrl = getSuperTagLoginUrl('/')
+  const superTagSignupUrl = getSuperTagSignupUrl('/')
 
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -55,9 +56,9 @@ function LoginPage() {
         </div>
         <p className="text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{' '}
-          <Link to="/auth/signup" className="font-medium text-primary hover:underline">
+          <a href={superTagSignupUrl} className="font-medium text-primary hover:underline">
             Sign up
-          </Link>
+          </a>
         </p>
       </div>
     </div>

@@ -17,7 +17,7 @@ import {
 } from '@/components/auth/oauth-buttons'
 import { openAuthPopup, usePopupTracker } from '@/lib/client/hooks/use-auth-broadcast'
 import { authClient } from '@/lib/client/auth-client'
-import { getSuperTagLoginUrl } from '@/lib/client/super-tag'
+import { getSuperTagLoginUrl, getSuperTagSignupUrl } from '@/lib/client/super-tag'
 
 interface OrgAuthConfig {
   found: boolean
@@ -124,6 +124,7 @@ export function PortalAuthFormInline({
     },
   })
   const superTagLoginUrl = getSuperTagLoginUrl('/auth/auth-complete')
+  const superTagSignupUrl = getSuperTagSignupUrl('/auth/auth-complete')
 
   // Fetch invitation details if invitationId is provided
   useEffect(() => {
@@ -477,7 +478,7 @@ export function PortalAuthFormInline({
             Sign in with Super Tag
           </Button>
           <Button asChild type="button" variant="outline" className="w-full">
-            <a href="/admin/login">Login with Quackback credentials</a>
+            <a href="/admin/login">Admin login</a>
           </Button>
         </div>
       )}
@@ -669,13 +670,9 @@ export function PortalAuthFormInline({
               {mode === 'login' ? (
                 <>
                   Don&apos;t have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => onModeSwitch('signup')}
-                    className="text-primary hover:underline font-medium"
-                  >
+                  <a href={superTagSignupUrl} className="text-primary hover:underline font-medium">
                     Sign up
-                  </button>
+                  </a>
                 </>
               ) : (
                 <>
