@@ -1,9 +1,6 @@
 import { createFileRoute, redirect, Link } from '@tanstack/react-router'
-import { useSuspenseQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { settingsQueries } from '@/lib/client/queries/settings'
-import { PortalAuthForm } from '@/components/auth/portal-auth-form'
-import { DEFAULT_PORTAL_CONFIG } from '@/lib/shared/types/settings'
 import { getSuperTagLoginUrl } from '@/lib/client/super-tag'
 
 /**
@@ -29,11 +26,6 @@ export const Route = createFileRoute('/auth/login')({
 
 function LoginPage() {
   Route.useLoaderData()
-
-  // Read pre-fetched data from React Query cache
-  const portalConfigQuery = useSuspenseQuery(settingsQueries.publicPortalConfig())
-  const portalConfig = portalConfigQuery.data
-  const authConfig = portalConfig.oauth ?? DEFAULT_PORTAL_CONFIG.oauth
   const superTagLoginUrl = getSuperTagLoginUrl('/')
 
   return (
@@ -41,27 +33,24 @@ function LoginPage() {
       <div className="w-full max-w-md space-y-8 px-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="mt-2 text-muted-foreground">Sign in to your account</p>
+          <p className="mt-2 text-muted-foreground">
+            Sign in with Super Tag or continue to admin login
+          </p>
         </div>
-        <PortalAuthForm
-          mode="login"
-          callbackUrl="/"
-          authConfig={authConfig}
-          customProviderNames={portalConfig.customProviderNames}
-        />
         <div className="space-y-3">
+          <Button asChild className="w-full">
+            <a href={superTagLoginUrl}>Sign in with Super Tag</a>
+          </Button>
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with Super Tag
-              </span>
+              <span className="bg-background px-2 text-muted-foreground">Admin access</span>
             </div>
           </div>
           <Button asChild variant="outline" className="w-full">
-            <a href={superTagLoginUrl}>Sign in with Super Tag</a>
+            <Link to="/admin/login">Login with Quackback credentials</Link>
           </Button>
         </div>
         <p className="text-center text-sm text-muted-foreground">

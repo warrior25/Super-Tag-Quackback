@@ -93,7 +93,14 @@ export function PortalAuthFormInline({
 }: PortalAuthFormInlineProps) {
   const passwordEnabled = authConfig?.oauth?.password ?? true
   const emailOtpEnabled = authConfig?.oauth?.email !== false
-  const defaultStep: Step = passwordEnabled ? 'credentials' : 'email'
+  const defaultStep: Step =
+    mode === 'login'
+      ? emailOtpEnabled
+        ? 'email'
+        : 'credentials'
+      : passwordEnabled
+        ? 'credentials'
+        : 'email'
 
   const [step, setStep] = useState<Step>(defaultStep)
   const [name, setName] = useState('')
@@ -433,7 +440,7 @@ export function PortalAuthFormInline({
   }
 
   const showAuthOptionsOnDefault = (step === 'credentials' || step === 'email') && !invitation
-  const hasCredentialForm = step === 'credentials' && passwordEnabled
+  const hasCredentialForm = step === 'credentials' && passwordEnabled && mode === 'signup'
   const hasEmailForm = step === 'email' && emailOtpEnabled
 
   return (
@@ -457,18 +464,22 @@ export function PortalAuthFormInline({
 
       {/* Super Tag login - always show on the default step for login mode */}
       {mode === 'login' && showAuthOptionsOnDefault && (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={initiateSuperTagLogin}
-          disabled={loadingAction !== null}
-        >
-          {loadingAction === 'super-tag' ? (
-            <ArrowPathIcon className="h-5 w-5 animate-spin" />
-          ) : null}
-          Sign in with Super Tag
-        </Button>
+        <div className="space-y-3">
+          <Button
+            type="button"
+            className="w-full"
+            onClick={initiateSuperTagLogin}
+            disabled={loadingAction !== null}
+          >
+            {loadingAction === 'super-tag' ? (
+              <ArrowPathIcon className="h-5 w-5 animate-spin" />
+            ) : null}
+            Sign in with Super Tag
+          </Button>
+          <Button asChild type="button" variant="outline" className="w-full">
+            <a href="/admin/login">Login with Quackback credentials</a>
+          </Button>
+        </div>
       )}
 
       {/* OAuth Buttons - only show on default step for non-invitation flow */}
@@ -554,40 +565,19 @@ export function PortalAuthFormInline({
             <Input
               id="inline-password"
               type="password"
-              placeholder={mode === 'signup' ? 'At least 8 characters' : '••••••••'}
+              placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loadingAction !== null}
-              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              autoComplete="new-password"
             />
           </div>
-
-          {mode === 'login' && (
-            <div className="text-right">
-              <button
-                type="button"
-                onClick={() => {
-                  setError('')
-                  setStep('forgot')
-                }}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                Forgot password?
-              </button>
-            </div>
-          )}
 
           <Button type="submit" disabled={loadingAction !== null} className="w-full">
             {loadingAction === 'password' && (
               <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
             )}
-            {loadingAction === 'password'
-              ? mode === 'signup'
-                ? 'Creating account...'
-                : 'Signing in...'
-              : mode === 'signup'
-                ? 'Create account'
-                : 'Sign in'}
+            {loadingAction === 'password' ? 'Creating account...' : 'Create account'}
           </Button>
 
           {/* Link to email OTP if also enabled */}
@@ -609,29 +599,14 @@ export function PortalAuthFormInline({
           {/* Mode switch */}
           {onModeSwitch && (
             <p className="text-center text-sm text-muted-foreground">
-              {mode === 'login' ? (
-                <>
-                  Don&apos;t have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => onModeSwitch('signup')}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Sign up
-                  </button>
-                </>
-              ) : (
-                <>
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => onModeSwitch('login')}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Sign in
-                  </button>
-                </>
-              )}
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={() => onModeSwitch('login')}
+                className="text-primary hover:underline font-medium"
+              >
+                Sign in
+              </button>
             </p>
           )}
         </form>
