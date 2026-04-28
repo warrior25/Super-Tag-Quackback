@@ -17,6 +17,7 @@ import {
 } from '@/components/auth/oauth-buttons'
 import { openAuthPopup, usePopupTracker } from '@/lib/client/hooks/use-auth-broadcast'
 import { authClient } from '@/lib/client/auth-client'
+import { getSuperTagLoginUrl } from '@/lib/client/super-tag'
 
 interface OrgAuthConfig {
   found: boolean
@@ -115,6 +116,7 @@ export function PortalAuthFormInline({
       setPopupBlocked(false)
     },
   })
+  const superTagLoginUrl = getSuperTagLoginUrl('/auth/auth-complete')
 
   // Fetch invitation details if invitationId is provided
   useEffect(() => {
@@ -354,6 +356,39 @@ export function PortalAuthFormInline({
     }
   }
 
+  const initiateSuperTagLogin = async () => {
+    setError('')
+
+    if (!superTagLoginUrl) {
+      setError('Super Tag login is not configured')
+      return
+    }
+
+    if (hasPopup()) {
+      focusPopup()
+      return
+    }
+
+    setLoadingAction('super-tag')
+    setPopupBlocked(false)
+
+    const popup = openAuthPopup('about:blank')
+    if (!popup) {
+      setPopupBlocked(true)
+      setLoadingAction(null)
+      return
+    }
+    trackPopup(popup)
+
+    try {
+      popup.location.href = superTagLoginUrl.toString()
+    } catch (err) {
+      popup.close()
+      setError(err instanceof Error ? err.message : 'Failed to initiate Super Tag login')
+      setLoadingAction(null)
+    }
+  }
+
   // Derive which auth methods are enabled
   const enabledProviders = getEnabledOAuthProviders(
     authConfig?.oauth ?? {},
@@ -397,8 +432,7 @@ export function PortalAuthFormInline({
     )
   }
 
-  const showOAuthOnDefault =
-    showOAuth && (step === 'credentials' || step === 'email') && !invitation
+  const showAuthOptionsOnDefault = (step === 'credentials' || step === 'email') && !invitation
   const hasCredentialForm = step === 'credentials' && passwordEnabled
   const hasEmailForm = step === 'email' && emailOtpEnabled
 
@@ -421,8 +455,24 @@ export function PortalAuthFormInline({
         </div>
       )}
 
+      {/* Super Tag login - always show on the default step for login mode */}
+      {mode === 'login' && showAuthOptionsOnDefault && (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={initiateSuperTagLogin}
+          disabled={loadingAction !== null}
+        >
+          {loadingAction === 'super-tag' ? (
+            <ArrowPathIcon className="h-5 w-5 animate-spin" />
+          ) : null}
+          Sign in with Super Tag
+        </Button>
+      )}
+
       {/* OAuth Buttons - only show on default step for non-invitation flow */}
-      {showOAuthOnDefault && (
+      {showOAuth && showAuthOptionsOnDefault && (
         <>
           <div className="space-y-3">
             {enabledProviders.map((provider) => {

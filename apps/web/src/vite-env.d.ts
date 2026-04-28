@@ -4,6 +4,7 @@
 declare const __APP_VERSION__: string
 declare const __GIT_COMMIT__: string
 declare const __BUILD_TIME__: string
+declare const __SUPER_TAG_URL__: string
 
 // Support for importing SQL files as raw strings
 declare module '*.sql?raw' {

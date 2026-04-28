@@ -1,9 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import { config } from '@/lib/server/config'
-// Vite `?raw` imports ship the bundle content as a string at build time.
-// packages/widget/dist/browser.js must exist — produced by `bun run --filter
-// @quackback/widget build` before the web app builds.
-import widgetBundle from '../../../../../../packages/widget/dist/browser.js?raw'
+
+const widgetBundlePath = new URL(
+  '../../../../../../packages/widget/dist/browser.js',
+  import.meta.url
+)
+
+async function loadWidgetBundle(): Promise<string> {
+  try {
+    return await readFile(fileURLToPath(widgetBundlePath), 'utf8')
+  } catch {
+    return 'console.warn("Quackback: widget bundle is not built yet.")'
+  }
+}
 
 function jsResponse(body: string, maxAge: number): Response {
   return new Response(body, {
@@ -31,7 +42,7 @@ export const Route = createFileRoute('/api/widget/sdk.js')({
         // during browser-queue init to auto-fire Quackback.init when the script
         // loads via a raw <script src="/api/widget/sdk.js"> tag.
         const prelude = `window.__QUACKBACK_URL__=${JSON.stringify(config.baseUrl)};`
-        return jsResponse(prelude + (widgetBundle as string), 3600)
+        return jsResponse(prelude + (await loadWidgetBundle()), 3600)
       },
     },
   },
