@@ -17,6 +17,7 @@ import {
 } from '@/components/auth/oauth-buttons'
 import { openAuthPopup, usePopupTracker } from '@/lib/client/hooks/use-auth-broadcast'
 import { authClient } from '@/lib/client/auth-client'
+import { getSuperTagLoginUrl, getSuperTagSignupUrl } from '@/lib/client/super-tag'
 
 interface OrgAuthConfig {
   found: boolean
@@ -92,7 +93,14 @@ export function PortalAuthFormInline({
 }: PortalAuthFormInlineProps) {
   const passwordEnabled = authConfig?.oauth?.password ?? true
   const emailOtpEnabled = authConfig?.oauth?.email !== false
-  const defaultStep: Step = passwordEnabled ? 'credentials' : 'email'
+  const defaultStep: Step =
+    mode === 'login'
+      ? emailOtpEnabled
+        ? 'email'
+        : 'credentials'
+      : passwordEnabled
+        ? 'credentials'
+        : 'email'
 
   const [step, setStep] = useState<Step>(defaultStep)
   const [name, setName] = useState('')
@@ -115,6 +123,8 @@ export function PortalAuthFormInline({
       setPopupBlocked(false)
     },
   })
+  const superTagLoginUrl = getSuperTagLoginUrl('/auth/auth-complete')
+  const superTagSignupUrl = getSuperTagSignupUrl('/auth/auth-complete')
 
   // Fetch invitation details if invitationId is provided
   useEffect(() => {
@@ -354,6 +364,39 @@ export function PortalAuthFormInline({
     }
   }
 
+  const initiateSuperTagLogin = async () => {
+    setError('')
+
+    if (!superTagLoginUrl) {
+      setError('Super Tag login is not configured')
+      return
+    }
+
+    if (hasPopup()) {
+      focusPopup()
+      return
+    }
+
+    setLoadingAction('super-tag')
+    setPopupBlocked(false)
+
+    const popup = openAuthPopup('about:blank')
+    if (!popup) {
+      setPopupBlocked(true)
+      setLoadingAction(null)
+      return
+    }
+    trackPopup(popup)
+
+    try {
+      popup.location.href = superTagLoginUrl.toString()
+    } catch (err) {
+      popup.close()
+      setError(err instanceof Error ? err.message : 'Failed to initiate Super Tag login')
+      setLoadingAction(null)
+    }
+  }
+
   // Derive which auth methods are enabled
   const enabledProviders = getEnabledOAuthProviders(
     authConfig?.oauth ?? {},
@@ -397,9 +440,8 @@ export function PortalAuthFormInline({
     )
   }
 
-  const showOAuthOnDefault =
-    showOAuth && (step === 'credentials' || step === 'email') && !invitation
-  const hasCredentialForm = step === 'credentials' && passwordEnabled
+  const showAuthOptionsOnDefault = (step === 'credentials' || step === 'email') && !invitation
+  const hasCredentialForm = step === 'credentials' && passwordEnabled && mode === 'signup'
   const hasEmailForm = step === 'email' && emailOtpEnabled
 
   return (
@@ -421,8 +463,28 @@ export function PortalAuthFormInline({
         </div>
       )}
 
+      {/* Super Tag login - always show on the default step for login mode */}
+      {mode === 'login' && showAuthOptionsOnDefault && (
+        <div className="space-y-3">
+          <Button
+            type="button"
+            className="w-full"
+            onClick={initiateSuperTagLogin}
+            disabled={loadingAction !== null}
+          >
+            {loadingAction === 'super-tag' ? (
+              <ArrowPathIcon className="h-5 w-5 animate-spin" />
+            ) : null}
+            Sign in with Super Tag
+          </Button>
+          <Button asChild type="button" variant="outline" className="w-full">
+            <a href="/admin/login">Admin login</a>
+          </Button>
+        </div>
+      )}
+
       {/* OAuth Buttons - only show on default step for non-invitation flow */}
-      {showOAuthOnDefault && (
+      {showOAuth && showAuthOptionsOnDefault && (
         <>
           <div className="space-y-3">
             {enabledProviders.map((provider) => {
@@ -504,40 +566,19 @@ export function PortalAuthFormInline({
             <Input
               id="inline-password"
               type="password"
-              placeholder={mode === 'signup' ? 'At least 8 characters' : '••••••••'}
+              placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loadingAction !== null}
-              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              autoComplete="new-password"
             />
           </div>
-
-          {mode === 'login' && (
-            <div className="text-right">
-              <button
-                type="button"
-                onClick={() => {
-                  setError('')
-                  setStep('forgot')
-                }}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                Forgot password?
-              </button>
-            </div>
-          )}
 
           <Button type="submit" disabled={loadingAction !== null} className="w-full">
             {loadingAction === 'password' && (
               <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
             )}
-            {loadingAction === 'password'
-              ? mode === 'signup'
-                ? 'Creating account...'
-                : 'Signing in...'
-              : mode === 'signup'
-                ? 'Create account'
-                : 'Sign in'}
+            {loadingAction === 'password' ? 'Creating account...' : 'Create account'}
           </Button>
 
           {/* Link to email OTP if also enabled */}
@@ -559,29 +600,14 @@ export function PortalAuthFormInline({
           {/* Mode switch */}
           {onModeSwitch && (
             <p className="text-center text-sm text-muted-foreground">
-              {mode === 'login' ? (
-                <>
-                  Don&apos;t have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => onModeSwitch('signup')}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Sign up
-                  </button>
-                </>
-              ) : (
-                <>
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => onModeSwitch('login')}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Sign in
-                  </button>
-                </>
-              )}
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={() => onModeSwitch('login')}
+                className="text-primary hover:underline font-medium"
+              >
+                Sign in
+              </button>
             </p>
           )}
         </form>
@@ -644,13 +670,9 @@ export function PortalAuthFormInline({
               {mode === 'login' ? (
                 <>
                   Don&apos;t have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => onModeSwitch('signup')}
-                    className="text-primary hover:underline font-medium"
-                  >
+                  <a href={superTagSignupUrl} className="text-primary hover:underline font-medium">
                     Sign up
-                  </button>
+                  </a>
                 </>
               ) : (
                 <>

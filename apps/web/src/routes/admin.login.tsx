@@ -23,7 +23,7 @@ const searchSchema = z.object({
  * Admin Login Page
  *
  * For team members (admin, member) to sign in to the admin dashboard.
- * Supports email OTP and any configured OAuth providers.
+ * Supports Quackback credentials, email OTP, and any configured OAuth providers.
  */
 export const Route = createFileRoute('/admin/login')({
   validateSearch: searchSchema,
@@ -67,8 +67,10 @@ function AdminLoginPage() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md space-y-8 px-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Team Sign In</h1>
-          <p className="mt-2 text-muted-foreground">Sign in to access the admin dashboard</p>
+          <h1 className="text-2xl font-bold">Admin login</h1>
+          <p className="mt-2 text-muted-foreground">
+            Login with Quackback credentials to access the admin dashboard
+          </p>
         </div>
         {errorMessage && (
           <Alert variant="destructive">
@@ -79,9 +81,7 @@ function AdminLoginPage() {
         <PortalAuthForm
           mode="login"
           callbackUrl={safeCallbackUrl}
-          // Admin login always uses email OTP — password auth is for portal users only.
-          // Force email: true and suppress password so the OTP form shows by default.
-          authConfig={{ ...authConfig, email: true, password: false }}
+          authConfig={authConfig}
           customProviderNames={customProviderNames}
         />
       </div>

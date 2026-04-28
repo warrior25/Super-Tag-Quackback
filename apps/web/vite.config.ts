@@ -24,7 +24,8 @@ function getBuildInfo() {
 
 export default defineConfig(({ mode }) => {
   // Load env from monorepo root where .env file lives
-  loadEnv(mode, path.resolve(__dirname, '../../'), '')
+  const env = loadEnv(mode, path.resolve(__dirname, '../../'), '')
+  const superTagUrl = env.SUPER_TAG_URL || 'http://localhost:3001'
 
   const buildInfo = getBuildInfo()
 
@@ -33,6 +34,7 @@ export default defineConfig(({ mode }) => {
       __APP_VERSION__: JSON.stringify(buildInfo.version),
       __GIT_COMMIT__: JSON.stringify(buildInfo.commit),
       __BUILD_TIME__: JSON.stringify(buildInfo.buildTime),
+      __SUPER_TAG_URL__: JSON.stringify(superTagUrl),
     },
     server: {
       port: Number(process.env.PORT || 3000),
